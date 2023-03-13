@@ -1,0 +1,31 @@
+---
+# tasks file for postfix
+
+- name: Verify postfix is installed.
+  ansible.builtin.package:
+    name: postfix
+    state: present
+
+- name: Assure postfix configuration file exists
+  ansible.builtin.file:
+    path: "{{ postfix_config_file }}"
+    state: file
+  changed_when: false
+
+- name: Update postfix configuration.
+  ansible.builtin.lineinfile:
+    dest: "{{ postfix_config_file }}"
+    line: "{{ item.name }} = {{ item.value }}"
+    regexp: "^{{ item.name }} ="
+    state: present
+  with_items:
+    - name: inetInterfaces
+      value: "{{ postfix_inet_interfaces }}"
+    - name: inetProtocols
+      value: "{{ postfix_inet_protocols }}"
+  notify: Restart postfix
+
+- name: Verify postfix is enabled.
+  ansible.builtin.service:
+    name: postfix
+    enabled: true
